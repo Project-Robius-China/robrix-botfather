@@ -5,7 +5,7 @@ use futures_core::Stream;
 use serde_json::Value;
 
 #[cfg(feature = "crew")]
-use crate::crew_runtime::CrewRuntimeAdapter;
+use crate::octos_runtime::OctosRuntimeAdapter;
 #[cfg(feature = "openclaw")]
 use crate::openclaw_runtime::OpenClawRuntimeAdapter;
 use crate::state::{BotRuntimeOverride, DeliveryTarget, RuntimeKind, RuntimeProfile};
@@ -78,8 +78,8 @@ pub enum BotRuntimeError {
     #[error("failed to serialize runtime message")]
     Serialization(#[from] serde_json::Error),
     #[cfg(feature = "crew")]
-    #[error("crew runtime error")]
-    Crew(#[from] robrix_octos_channel::BridgeError),
+    #[error("octos runtime error")]
+    Octos(#[from] robrix_octos_channel::BridgeError),
 }
 
 #[async_trait]
@@ -92,7 +92,7 @@ pub trait BotRuntime: Send + Sync {
 #[derive(Clone, Debug)]
 pub enum RuntimeAdapter {
     #[cfg(feature = "crew")]
-    Crew(CrewRuntimeAdapter),
+    Crew(OctosRuntimeAdapter),
     #[cfg(feature = "openclaw")]
     OpenClaw(OpenClawRuntimeAdapter),
 }
@@ -103,7 +103,7 @@ impl RuntimeAdapter {
             RuntimeKind::Crew => {
                 #[cfg(feature = "crew")]
                 {
-                    return Ok(Self::Crew(CrewRuntimeAdapter::from_profile(profile)?));
+                    return Ok(Self::Crew(OctosRuntimeAdapter::from_profile(profile)?));
                 }
                 #[cfg(not(feature = "crew"))]
                 {

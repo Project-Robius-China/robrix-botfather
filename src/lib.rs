@@ -6,7 +6,7 @@
 //! 3. resolve a room into one or more bot runtimes before dispatching messages.
 
 #[cfg(feature = "crew")]
-pub mod crew_runtime;
+pub mod octos_runtime;
 pub mod manager;
 #[cfg(feature = "openclaw")]
 pub mod openclaw_runtime;
@@ -16,7 +16,7 @@ pub mod state;
 pub mod store;
 
 #[cfg(feature = "crew")]
-pub use crew_runtime::CrewRuntimeAdapter;
+pub use octos_runtime::OctosRuntimeAdapter;
 pub use manager::{BotfatherManager, BotfatherManagerError};
 #[cfg(feature = "openclaw")]
 pub use openclaw_runtime::OpenClawRuntimeAdapter;

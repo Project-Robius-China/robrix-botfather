@@ -10,12 +10,12 @@ use crate::runtime::{BotEvent, BotEventStream, BotRequest, BotRuntime, BotRuntim
 use crate::state::{RuntimeConfig, RuntimeKind, RuntimeProfile};
 
 #[derive(Clone, Debug)]
-pub struct CrewRuntimeAdapter {
+pub struct OctosRuntimeAdapter {
     transport: SseHttpTransport,
     base_override: CrewProfileOverride,
 }
 
-impl CrewRuntimeAdapter {
+impl OctosRuntimeAdapter {
     pub fn from_profile(profile: &RuntimeProfile) -> Result<Self, BotRuntimeError> {
         let RuntimeConfig::Crew {
             base_url,
@@ -49,7 +49,7 @@ impl CrewRuntimeAdapter {
 }
 
 #[async_trait]
-impl BotRuntime for CrewRuntimeAdapter {
+impl BotRuntime for OctosRuntimeAdapter {
     async fn dispatch_stream(
         &self,
         request: BotRequest,
