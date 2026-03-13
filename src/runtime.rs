@@ -79,7 +79,7 @@ pub enum BotRuntimeError {
     Serialization(#[from] serde_json::Error),
     #[cfg(feature = "crew")]
     #[error("crew runtime error")]
-    Crew(#[from] robrix_crew_channel::BridgeError),
+    Crew(#[from] robrix_octos_channel::BridgeError),
 }
 
 #[async_trait]

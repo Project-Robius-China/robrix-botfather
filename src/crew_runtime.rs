@@ -1,7 +1,7 @@
 use async_stream::try_stream;
 use async_trait::async_trait;
 use futures_util::StreamExt;
-use robrix_crew_channel::{
+use robrix_octos_channel::{
     BridgeEvent, CrewProfileOverride, CrewStreamRequest, CrewTransport, SseHttpTransport,
 };
 use url::Url;

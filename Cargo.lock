@@ -856,7 +856,7 @@ dependencies = [
  "async-trait",
  "futures-core",
  "futures-util",
- "robrix-crew-channel",
+ "robrix-octos-channel",
  "robrix-openclaw-channel",
  "serde",
  "serde_json",
@@ -866,8 +866,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "robrix-crew-channel"
+name = "robrix-octos-channel"
 version = "0.1.0"
+source = "git+ssh://git@github.com/Project-Robius-China/robrix-octos-channel.git#bc4649d2211ae19694e2c38a3be096a1c6242dcd"
 dependencies = [
  "async-stream",
  "async-trait",
@@ -883,6 +884,7 @@ dependencies = [
 [[package]]
 name = "robrix-openclaw-channel"
 version = "0.1.0"
+source = "git+https://github.com/Project-Robius-China/robrix-openclaw-channel.git#7146a751676f9104b6826c39cc87ae025244791b"
 dependencies = [
  "async-stream",
  "async-trait",

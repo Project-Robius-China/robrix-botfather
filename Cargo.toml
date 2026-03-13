@@ -6,7 +6,7 @@ repository = "ssh://git@github.com/Project-Robius-China/robrix-botfather.git"
 
 [features]
 default = ["crew", "openclaw"]
-crew = ["dep:robrix-crew-channel"]
+crew = ["dep:robrix-octos-channel"]
 openclaw = ["dep:robrix-openclaw-channel"]
 
 [dependencies]
@@ -14,8 +14,8 @@ async-stream = "0.3"
 async-trait = "0.1"
 futures-core = "0.3"
 futures-util = "0.3"
-robrix-crew-channel = { git = "ssh://git@github.com/Project-Robius-China/robrix-crew-channel.git", optional = true }
-robrix-openclaw-channel = { git = "ssh://git@github.com/Project-Robius-China/robrix-openclaw-channel.git", optional = true }
+robrix-octos-channel = { git = "ssh://git@github.com/Project-Robius-China/robrix-octos-channel.git", optional = true }
+robrix-openclaw-channel = { git = "https://github.com/Project-Robius-China/robrix-openclaw-channel.git", optional = true }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 thiserror = "2.0"
