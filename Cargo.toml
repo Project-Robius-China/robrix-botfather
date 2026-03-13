@@ -1,0 +1,25 @@
+[package]
+name = "robrix-botfather"
+version = "0.1.0"
+edition = "2024"
+repository = "ssh://git@github.com/Project-Robius-China/robrix-botfather.git"
+
+[features]
+default = ["crew", "openclaw"]
+crew = ["dep:robrix-crew-channel"]
+openclaw = ["dep:robrix-openclaw-channel"]
+
+[dependencies]
+async-stream = "0.3"
+async-trait = "0.1"
+futures-core = "0.3"
+futures-util = "0.3"
+robrix-crew-channel = { git = "ssh://git@github.com/Project-Robius-China/robrix-crew-channel.git", optional = true }
+robrix-openclaw-channel = { git = "ssh://git@github.com/Project-Robius-China/robrix-openclaw-channel.git", optional = true }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2.0"
+url = { version = "2.5", features = ["serde"] }
+
+[dev-dependencies]
+tempfile = "3"
