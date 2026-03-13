@@ -112,11 +112,24 @@ pub fn resolve_room_bots(
     }
 
     resolved.sort_by(|lhs, rhs| {
-        runtime_priority(rhs.runtime_kind())
-            .cmp(&runtime_priority(lhs.runtime_kind()))
-            .then_with(|| rhs.effective_priority().cmp(&lhs.effective_priority()))
-            .then_with(|| source_rank(&rhs.source).cmp(&source_rank(&lhs.source)))
-            .then_with(|| lhs.bot.id.cmp(&rhs.bot.id))
+        let source_cmp = source_rank(&rhs.source).cmp(&source_rank(&lhs.source));
+        if !source_cmp.is_eq() {
+            return source_cmp;
+        }
+
+        let same_default_source =
+            matches!(lhs.source, BindingSource::Default) && matches!(rhs.source, BindingSource::Default);
+        if same_default_source {
+            runtime_priority(rhs.runtime_kind())
+                .cmp(&runtime_priority(lhs.runtime_kind()))
+                .then_with(|| rhs.effective_priority().cmp(&lhs.effective_priority()))
+                .then_with(|| lhs.bot.id.cmp(&rhs.bot.id))
+        } else {
+            rhs.effective_priority()
+                .cmp(&lhs.effective_priority())
+                .then_with(|| runtime_priority(rhs.runtime_kind()).cmp(&runtime_priority(lhs.runtime_kind())))
+                .then_with(|| lhs.bot.id.cmp(&rhs.bot.id))
+        }
     });
 
     Ok(resolved)
@@ -435,5 +448,31 @@ mod tests {
         assert!(matches!(openclaw.source, BindingSource::Room { .. }));
         assert_eq!(openclaw.delivery, DeliveryTarget::CurrentRoom);
         assert_eq!(openclaw.binding.unwrap().priority, 42);
+    }
+
+    #[cfg(all(feature = "crew", feature = "openclaw"))]
+    #[test]
+    fn room_binding_beats_default_runtime_priority() {
+        let mut state = base_state();
+        state.defaults = BotfatherDefaults {
+            bot_ids: vec!["crew-main".into()],
+            ..Default::default()
+        };
+        state.room_bindings.insert(
+            "!room:example.org".into(),
+            vec![BotBinding {
+                bot_id: "openclaw-main".into(),
+                enabled: true,
+                priority: 0,
+                trigger: None,
+                delivery: None,
+                permissions: None,
+            }],
+        );
+
+        let resolved = resolve_room_bot(&state, "!room:example.org", None).unwrap();
+
+        assert_eq!(resolved.bot.id, "openclaw-main");
+        assert!(matches!(resolved.source, BindingSource::Room { .. }));
     }
 }
