@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
-pub const STATE_VERSION: u32 = 2;
+pub const STATE_VERSION: u32 = 3;
 
 pub type StateVersion = u32;
 pub type WorkspaceId = String;
@@ -11,6 +11,7 @@ pub type RuntimeProfileId = String;
 pub type BotId = String;
 pub type RoomId = String;
 pub type SpaceId = String;
+pub type SenderProfileId = String;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct BotfatherState {
@@ -26,6 +27,8 @@ pub struct BotfatherState {
     pub runtime_profiles: BTreeMap<RuntimeProfileId, RuntimeProfile>,
     #[serde(default)]
     pub bots: BTreeMap<BotId, BotDefinition>,
+    #[serde(default)]
+    pub sender_profiles: BTreeMap<SenderProfileId, SenderProfile>,
     #[serde(default)]
     pub space_bindings: BTreeMap<SpaceId, Vec<BotBinding>>,
     #[serde(default)]
@@ -45,6 +48,7 @@ impl Default for BotfatherState {
             workspaces: BTreeMap::new(),
             runtime_profiles: BTreeMap::new(),
             bots: BTreeMap::new(),
+            sender_profiles: BTreeMap::new(),
             space_bindings: BTreeMap::new(),
             room_bindings: BTreeMap::new(),
             defaults: BotfatherDefaults::default(),
@@ -197,6 +201,8 @@ pub struct BotDefinition {
     pub name: String,
     pub runtime_profile_id: RuntimeProfileId,
     #[serde(default)]
+    pub default_sender_profile_id: Option<SenderProfileId>,
+    #[serde(default)]
     pub priority: i32,
     #[serde(default)]
     pub enabled: bool,
@@ -259,6 +265,8 @@ pub struct BotBinding {
     pub trigger: Option<TriggerPolicy>,
     pub delivery: Option<DeliveryTarget>,
     pub permissions: Option<PermissionPolicy>,
+    #[serde(default)]
+    pub sender_profile_id: Option<SenderProfileId>,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
@@ -266,7 +274,53 @@ pub struct BotfatherDefaults {
     #[serde(default)]
     pub bot_ids: Vec<BotId>,
     #[serde(default)]
+    pub default_sender_profile_id: Option<SenderProfileId>,
+    #[serde(default)]
     pub room_stream_preview_enabled: bool,
+}
+
+#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "kebab-case")]
+pub enum SenderProfileKind {
+    #[default]
+    CurrentUser,
+    MatrixBot,
+}
+
+#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "kebab-case")]
+pub enum SenderSecurityLevel {
+    #[default]
+    Standard,
+    Elevated,
+    Isolated,
+}
+
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
+pub struct SenderProfile {
+    pub id: SenderProfileId,
+    pub name: String,
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default)]
+    pub kind: SenderProfileKind,
+    #[serde(default)]
+    pub matrix_user_id: Option<String>,
+    #[serde(default)]
+    pub homeserver_url: Option<String>,
+    #[serde(default)]
+    pub device_id: Option<String>,
+    #[serde(default)]
+    pub access_token_env: Option<String>,
+    #[serde(default)]
+    pub security: SenderSecurityLevel,
+    pub description: Option<String>,
+}
+
+impl SenderProfile {
+    pub fn uses_current_user(&self) -> bool {
+        self.kind == SenderProfileKind::CurrentUser
+    }
 }
 
 #[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]

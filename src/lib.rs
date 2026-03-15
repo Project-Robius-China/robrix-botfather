@@ -30,8 +30,8 @@ pub use runtime::{
 pub use state::{
     BotBinding, BotDefinition, BotRuntimeOverride, BotfatherDefaults, BotfatherState,
     DeliveryTarget, DispatchPolicy, InventorySnapshot, OpenClawRuntimeConfig, PermissionPolicy,
-    RoomInventory, RuntimeConfig, RuntimeKind, RuntimeProfile, RuntimeState, SessionKey,
-    SessionRecord, SessionScopeKind, SpaceInventory, TriggerMode, TriggerPolicy, UserSnapshot,
-    Workspace,
+    RoomInventory, RuntimeConfig, RuntimeKind, RuntimeProfile, RuntimeState, SenderProfile,
+    SenderProfileId, SenderProfileKind, SenderSecurityLevel, SessionKey, SessionRecord,
+    SessionScopeKind, SpaceInventory, TriggerMode, TriggerPolicy, UserSnapshot, Workspace,
 };
 pub use store::{StateStore, StateStoreError};

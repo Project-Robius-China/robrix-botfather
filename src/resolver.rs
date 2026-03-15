@@ -1,7 +1,7 @@
 use crate::runtime::runtime_feature_enabled;
 use crate::state::{
     BotBinding, BotDefinition, BotRuntimeOverride, BotfatherState, DeliveryTarget, DispatchPolicy,
-    PermissionPolicy, RuntimeKind, RuntimeProfile, TriggerPolicy, Workspace,
+    PermissionPolicy, RuntimeKind, RuntimeProfile, SenderProfile, TriggerPolicy, Workspace,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -12,6 +12,8 @@ pub enum ResolveError {
     UnknownBot(String),
     #[error("runtime profile '{0}' was referenced but not found")]
     UnknownRuntimeProfile(String),
+    #[error("sender profile '{0}' was referenced but not found")]
+    UnknownSenderProfile(String),
     #[error("workspace '{0}' was referenced but not found")]
     UnknownWorkspace(String),
     #[error("no enabled bot is configured for room '{0}'")]
@@ -34,6 +36,7 @@ pub struct ResolvedBotBinding {
     pub binding: Option<BotBinding>,
     pub bot: BotDefinition,
     pub runtime_profile: RuntimeProfile,
+    pub sender_profile: SenderProfile,
     pub workspace: Option<Workspace>,
     pub trigger: TriggerPolicy,
     pub delivery: DeliveryTarget,
@@ -182,6 +185,7 @@ fn resolve_bound_bot(
         .get(&bot.runtime_profile_id)
         .cloned()
         .ok_or_else(|| ResolveError::UnknownRuntimeProfile(bot.runtime_profile_id.clone()))?;
+    let sender_profile = resolve_sender_profile(state, &bot, binding.as_ref())?;
     let workspace = runtime_profile
         .workspace_id
         .as_ref()
@@ -218,6 +222,7 @@ fn resolve_bound_bot(
         binding,
         bot,
         runtime_profile,
+        sender_profile,
         workspace,
         trigger,
         delivery,
@@ -225,6 +230,24 @@ fn resolve_bound_bot(
         runtime_override,
         dispatch_policy,
     })
+}
+
+fn resolve_sender_profile(
+    state: &BotfatherState,
+    bot: &BotDefinition,
+    binding: Option<&BotBinding>,
+) -> Result<SenderProfile, ResolveError> {
+    let sender_profile_id = binding
+        .and_then(|binding| binding.sender_profile_id.as_ref())
+        .or(bot.default_sender_profile_id.as_ref())
+        .or(state.defaults.default_sender_profile_id.as_ref())
+        .ok_or_else(|| ResolveError::UnknownSenderProfile("(none)".into()))?;
+    let sender_profile = state
+        .sender_profiles
+        .get(sender_profile_id)
+        .cloned()
+        .ok_or_else(|| ResolveError::UnknownSenderProfile(sender_profile_id.clone()))?;
+    Ok(sender_profile)
 }
 
 fn upsert_resolved(resolved: &mut Vec<ResolvedBotBinding>, next: ResolvedBotBinding) {
@@ -264,7 +287,8 @@ mod tests {
     use super::{BindingSource, resolve_room_bot, resolve_room_bots};
     #[cfg(all(feature = "crew", feature = "openclaw"))]
     use crate::state::{
-        BotBinding, BotfatherDefaults, OpenClawRuntimeConfig, TriggerMode, UserSnapshot, Workspace,
+        BotBinding, BotfatherDefaults, OpenClawRuntimeConfig, SenderProfile, SenderProfileKind,
+        SenderSecurityLevel, TriggerMode, UserSnapshot, Workspace,
     };
     #[cfg(all(feature = "crew", feature = "openclaw"))]
     use crate::state::{
@@ -343,6 +367,7 @@ mod tests {
                 id: "crew-main".into(),
                 name: "Crew Main".into(),
                 runtime_profile_id: "crew".into(),
+                default_sender_profile_id: Some("current-user".into()),
                 priority: 0,
                 enabled: true,
                 trigger: TriggerPolicy {
@@ -362,6 +387,7 @@ mod tests {
                 id: "openclaw-main".into(),
                 name: "OpenClaw Main".into(),
                 runtime_profile_id: "openclaw".into(),
+                default_sender_profile_id: Some("current-user".into()),
                 priority: 100,
                 enabled: true,
                 trigger: TriggerPolicy {
@@ -375,6 +401,21 @@ mod tests {
                 description: None,
             },
         );
+        state.sender_profiles.insert(
+            "current-user".into(),
+            SenderProfile {
+                id: "current-user".into(),
+                name: "Current User".into(),
+                enabled: true,
+                kind: SenderProfileKind::CurrentUser,
+                matrix_user_id: Some("@user:example.org".into()),
+                homeserver_url: Some("https://matrix.example.org".into()),
+                device_id: None,
+                access_token_env: None,
+                security: SenderSecurityLevel::Standard,
+                description: None,
+            },
+        );
         state
     }
 
@@ -384,6 +425,7 @@ mod tests {
         let mut state = base_state();
         state.defaults = BotfatherDefaults {
             bot_ids: vec!["openclaw-main".into(), "crew-main".into()],
+            default_sender_profile_id: Some("current-user".into()),
             ..Default::default()
         };
 
@@ -399,6 +441,7 @@ mod tests {
         let mut state = base_state();
         state.defaults = BotfatherDefaults {
             bot_ids: vec!["openclaw-main".into(), "crew-main".into()],
+            default_sender_profile_id: Some("current-user".into()),
             ..Default::default()
         };
 
@@ -414,6 +457,7 @@ mod tests {
         let mut state = base_state();
         state.defaults = BotfatherDefaults {
             bot_ids: vec!["crew-main".into()],
+            default_sender_profile_id: Some("current-user".into()),
             ..Default::default()
         };
         state.space_bindings.insert(
@@ -425,6 +469,7 @@ mod tests {
                 trigger: None,
                 delivery: Some(DeliveryTarget::CurrentThread),
                 permissions: None,
+                sender_profile_id: None,
             }],
         );
         state.room_bindings.insert(
@@ -436,6 +481,7 @@ mod tests {
                 trigger: None,
                 delivery: Some(DeliveryTarget::CurrentRoom),
                 permissions: None,
+                sender_profile_id: None,
             }],
         );
 
@@ -456,6 +502,7 @@ mod tests {
         let mut state = base_state();
         state.defaults = BotfatherDefaults {
             bot_ids: vec!["crew-main".into()],
+            default_sender_profile_id: Some("current-user".into()),
             ..Default::default()
         };
         state.room_bindings.insert(
@@ -467,6 +514,7 @@ mod tests {
                 trigger: None,
                 delivery: None,
                 permissions: None,
+                sender_profile_id: None,
             }],
         );
 
@@ -474,5 +522,49 @@ mod tests {
 
         assert_eq!(resolved.bot.id, "openclaw-main");
         assert!(matches!(resolved.source, BindingSource::Room { .. }));
+    }
+
+    #[cfg(all(feature = "crew", feature = "openclaw"))]
+    #[test]
+    fn room_binding_can_override_sender_profile() {
+        let mut state = base_state();
+        state.defaults = BotfatherDefaults {
+            bot_ids: vec!["crew-main".into()],
+            default_sender_profile_id: Some("current-user".into()),
+            ..Default::default()
+        };
+        state.sender_profiles.insert(
+            "secure-room-bot".into(),
+            SenderProfile {
+                id: "secure-room-bot".into(),
+                name: "Secure Room Bot".into(),
+                enabled: true,
+                kind: SenderProfileKind::MatrixBot,
+                matrix_user_id: Some("@secure-bot:example.org".into()),
+                homeserver_url: Some("https://matrix.example.org".into()),
+                device_id: Some("SECUREBOT01".into()),
+                access_token_env: Some("SECURE_ROOM_BOT_ACCESS_TOKEN".into()),
+                security: SenderSecurityLevel::Isolated,
+                description: None,
+            },
+        );
+        state.room_bindings.insert(
+            "!room:example.org".into(),
+            vec![BotBinding {
+                bot_id: "crew-main".into(),
+                enabled: true,
+                priority: 0,
+                trigger: None,
+                delivery: None,
+                permissions: None,
+                sender_profile_id: Some("secure-room-bot".into()),
+            }],
+        );
+
+        let resolved = resolve_room_bot(&state, "!room:example.org", None).unwrap();
+
+        assert_eq!(resolved.bot.id, "crew-main");
+        assert_eq!(resolved.sender_profile.id, "secure-room-bot");
+        assert_eq!(resolved.sender_profile.security, SenderSecurityLevel::Isolated);
     }
 }

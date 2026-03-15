@@ -176,7 +176,7 @@ mod tests {
     use crate::state::{
         BotDefinition, BotfatherDefaults, BotfatherState, DeliveryTarget, InventorySnapshot,
         OpenClawRuntimeConfig, PermissionPolicy, RoomInventory, RuntimeConfig, RuntimeProfile,
-        TriggerPolicy,
+        SenderProfile, SenderProfileKind, SenderSecurityLevel, TriggerPolicy,
     };
     use crate::store::StateStore;
 
@@ -198,6 +198,7 @@ mod tests {
             },
             defaults: BotfatherDefaults {
                 bot_ids: vec![default_bot_id().into()],
+                default_sender_profile_id: Some("current-user".into()),
                 ..Default::default()
             },
             ..Default::default()
@@ -219,6 +220,7 @@ mod tests {
                 id: default_bot_id().into(),
                 name: default_runtime_name().into(),
                 runtime_profile_id: default_runtime_id().into(),
+                default_sender_profile_id: Some("current-user".into()),
                 priority: 0,
                 enabled: true,
                 trigger: TriggerPolicy::default(),
@@ -226,6 +228,21 @@ mod tests {
                 permissions: PermissionPolicy::default(),
                 runtime_override: Default::default(),
                 dispatch_policy_override: None,
+                description: None,
+            },
+        );
+        state.sender_profiles.insert(
+            "current-user".into(),
+            SenderProfile {
+                id: "current-user".into(),
+                name: "Current User".into(),
+                enabled: true,
+                kind: SenderProfileKind::CurrentUser,
+                matrix_user_id: Some("@user:example.org".into()),
+                homeserver_url: Some("https://matrix.example.org".into()),
+                device_id: None,
+                access_token_env: None,
+                security: SenderSecurityLevel::Standard,
                 description: None,
             },
         );
