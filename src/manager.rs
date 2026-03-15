@@ -77,14 +77,13 @@ impl BotfatherManager {
     ) -> Result<(ResolvedBotBinding, RuntimeAdapter, BotRequest), BotfatherManagerError> {
         let resolved = self.resolve_room_bot(room_id, preferred_bot_id)?;
         let runtime = self.runtime_for_resolved(&resolved)?;
-        let session_id =
-            ensure_session_id(
-                &mut self.state,
-                room_id,
-                thread_root_event_id,
-                reply_root_event_id,
-                &resolved,
-            );
+        let session_id = ensure_session_id(
+            &mut self.state,
+            room_id,
+            thread_root_event_id,
+            reply_root_event_id,
+            &resolved,
+        );
         let request = BotRequest {
             room_id: room_id.to_string(),
             thread_root_event_id: thread_root_event_id.map(ToOwned::to_owned),
@@ -107,23 +106,22 @@ fn ensure_session_id(
     reply_root_event_id: Option<&str>,
     resolved: &ResolvedBotBinding,
 ) -> String {
-    let (scope_kind, thread_root_event_id, reply_root_event_id) = if let Some(thread_root_event_id) =
-        thread_root_event_id
-    {
-        (
-            SessionScopeKind::Thread,
-            Some(thread_root_event_id.to_string()),
-            None,
-        )
-    } else if let Some(reply_root_event_id) = reply_root_event_id {
-        (
-            SessionScopeKind::ReplyRoot,
-            None,
-            Some(reply_root_event_id.to_string()),
-        )
-    } else {
-        (SessionScopeKind::Room, None, None)
-    };
+    let (scope_kind, thread_root_event_id, reply_root_event_id) =
+        if let Some(thread_root_event_id) = thread_root_event_id {
+            (
+                SessionScopeKind::Thread,
+                Some(thread_root_event_id.to_string()),
+                None,
+            )
+        } else if let Some(reply_root_event_id) = reply_root_event_id {
+            (
+                SessionScopeKind::ReplyRoot,
+                None,
+                Some(reply_root_event_id.to_string()),
+            )
+        } else {
+            (SessionScopeKind::Room, None, None)
+        };
     let key = SessionKey {
         room_id: room_id.to_string(),
         scope_kind,
@@ -242,6 +240,9 @@ mod tests {
                 homeserver_url: Some("https://matrix.example.org".into()),
                 device_id: None,
                 access_token_env: None,
+                access_token: None,
+                last_verified_at_millis: None,
+                last_verification_error: None,
                 security: SenderSecurityLevel::Standard,
                 description: None,
             },

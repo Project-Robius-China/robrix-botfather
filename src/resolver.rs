@@ -120,8 +120,8 @@ pub fn resolve_room_bots(
             return source_cmp;
         }
 
-        let same_default_source =
-            matches!(lhs.source, BindingSource::Default) && matches!(rhs.source, BindingSource::Default);
+        let same_default_source = matches!(lhs.source, BindingSource::Default)
+            && matches!(rhs.source, BindingSource::Default);
         if same_default_source {
             runtime_priority(rhs.runtime_kind())
                 .cmp(&runtime_priority(lhs.runtime_kind()))
@@ -130,7 +130,9 @@ pub fn resolve_room_bots(
         } else {
             rhs.effective_priority()
                 .cmp(&lhs.effective_priority())
-                .then_with(|| runtime_priority(rhs.runtime_kind()).cmp(&runtime_priority(lhs.runtime_kind())))
+                .then_with(|| {
+                    runtime_priority(rhs.runtime_kind()).cmp(&runtime_priority(lhs.runtime_kind()))
+                })
                 .then_with(|| lhs.bot.id.cmp(&rhs.bot.id))
         }
     });
@@ -412,6 +414,9 @@ mod tests {
                 homeserver_url: Some("https://matrix.example.org".into()),
                 device_id: None,
                 access_token_env: None,
+                access_token: None,
+                last_verified_at_millis: None,
+                last_verification_error: None,
                 security: SenderSecurityLevel::Standard,
                 description: None,
             },
@@ -544,6 +549,9 @@ mod tests {
                 homeserver_url: Some("https://matrix.example.org".into()),
                 device_id: Some("SECUREBOT01".into()),
                 access_token_env: Some("SECURE_ROOM_BOT_ACCESS_TOKEN".into()),
+                access_token: None,
+                last_verified_at_millis: None,
+                last_verification_error: None,
                 security: SenderSecurityLevel::Isolated,
                 description: None,
             },
@@ -565,6 +573,9 @@ mod tests {
 
         assert_eq!(resolved.bot.id, "crew-main");
         assert_eq!(resolved.sender_profile.id, "secure-room-bot");
-        assert_eq!(resolved.sender_profile.security, SenderSecurityLevel::Isolated);
+        assert_eq!(
+            resolved.sender_profile.security,
+            SenderSecurityLevel::Isolated
+        );
     }
 }

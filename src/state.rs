@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
-pub const STATE_VERSION: u32 = 3;
+pub const STATE_VERSION: u32 = 4;
 
 pub type StateVersion = u32;
 pub type WorkspaceId = String;
@@ -313,6 +313,12 @@ pub struct SenderProfile {
     #[serde(default)]
     pub access_token_env: Option<String>,
     #[serde(default)]
+    pub access_token: Option<String>,
+    #[serde(default)]
+    pub last_verified_at_millis: Option<u64>,
+    #[serde(default)]
+    pub last_verification_error: Option<String>,
+    #[serde(default)]
     pub security: SenderSecurityLevel,
     pub description: Option<String>,
 }
@@ -383,9 +389,7 @@ pub struct RuntimeState {
     pub active_sessions: BTreeMap<SessionKey, SessionRecord>,
 }
 
-#[derive(
-    Clone, Copy, Debug, Default, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord,
-)]
+#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(rename_all = "kebab-case")]
 pub enum SessionScopeKind {
     #[default]
@@ -524,7 +528,7 @@ mod tests {
     use std::collections::BTreeMap;
 
     use super::{
-        BotfatherState, RuntimeState, SessionKey, SessionRecord, SessionScopeKind, STATE_VERSION,
+        BotfatherState, RuntimeState, STATE_VERSION, SessionKey, SessionRecord, SessionScopeKind,
     };
 
     #[test]

@@ -5,9 +5,9 @@
 //! 2. edit the bot/runtime policy section through its own UI,
 //! 3. resolve a room into one or more bot runtimes before dispatching messages.
 
+pub mod manager;
 #[cfg(feature = "crew")]
 pub mod octos_runtime;
-pub mod manager;
 #[cfg(feature = "openclaw")]
 pub mod openclaw_runtime;
 pub mod resolver;
@@ -15,9 +15,9 @@ pub mod runtime;
 pub mod state;
 pub mod store;
 
+pub use manager::{BotfatherManager, BotfatherManagerError};
 #[cfg(feature = "crew")]
 pub use octos_runtime::OctosRuntimeAdapter;
-pub use manager::{BotfatherManager, BotfatherManagerError};
 #[cfg(feature = "openclaw")]
 pub use openclaw_runtime::OpenClawRuntimeAdapter;
 pub use resolver::{
